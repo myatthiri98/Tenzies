@@ -1,3 +1,4 @@
+import React, { useCallback, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -5,30 +6,79 @@ import {
   View,
   FlatList,
 } from "react-native";
-import React, { useState } from "react";
 import Die from "../design-system/components/Die";
 
+const generateDice = () =>
+  Array.from({ length: 10 }, () => Math.ceil(Math.random() * 9));
+
 const MainScreen = () => {
-  const [dice, setDice] = useState<number[]>(
-    Array.from({ length: 10 }, () => Math.ceil(Math.random() * 6))
-  );
+  const [dice, setDice] = useState<number[]>(generateDice());
   const [heldDice, setHeldDice] = useState<boolean[]>(Array(10).fill(false));
   const [attempts, setAttempts] = useState<number>(0);
+  const [gameWon, setGameWon] = useState<boolean>(false);
+  const [heldDiceValue, setHeldDiceValue] = useState<number | null>(null);
 
-  const rollDice = () => {
-    setAttempts(attempts + 1);
-    setDice(
-      dice.map((die, idx) =>
-        heldDice[idx] ? die : Math.ceil(Math.random() * 6)
-      )
-    );
-  };
+  const rollDice = useCallback(() => {
+    if (!gameWon && canRoll()) {
+      setAttempts((prev) => prev + 1);
+      setDice((prevDice) =>
+        prevDice.map((die, idx) =>
+          heldDice[idx] ? die : Math.ceil(Math.random() * 9)
+        )
+      );
+      checkForWin();
+    }
+  }, [gameWon, heldDice]);
 
-  const holdDie = (index: number) => {
-    setHeldDice(
-      heldDice.map((isHeld, idx) => (idx === index ? !isHeld : isHeld))
+  const holdDie = useCallback(
+    (index: number) => {
+      if (!gameWon) {
+        setHeldDice((prevHeldDice) => {
+          const newHeldDice = [...prevHeldDice];
+          newHeldDice[index] = !newHeldDice[index];
+
+          const newHeldValue = dice[index];
+          setHeldDiceValue(newHeldValue);
+
+          return newHeldDice;
+        });
+      }
+    },
+    [gameWon, dice]
+  );
+
+  const canRoll = useCallback(() => {
+    const heldDiceValues = dice.filter((_, idx) => heldDice[idx]);
+    return (
+      heldDiceValues.length === 0 ||
+      heldDiceValues.every((value) => value === heldDiceValues[0])
     );
-  };
+  }, [heldDice, dice]);
+
+  const isCorrect = useCallback(
+    (index: number) => heldDiceValue !== null && heldDiceValue === dice[index],
+    [heldDiceValue, dice]
+  );
+
+  const checkForWin = useCallback(() => {
+    const allHeld = heldDice.every((isHeld) => isHeld);
+    const allSameValue = dice.every((die) => die === dice[0]);
+
+    if (allHeld && allSameValue) {
+      setGameWon(true);
+      resetGame();
+    }
+  }, [heldDice, dice]);
+
+  const resetGame = useCallback(() => {
+    setTimeout(() => {
+      setAttempts(0);
+      setDice(generateDice());
+      setHeldDice(Array(10).fill(false));
+      setGameWon(false);
+      setHeldDiceValue(null);
+    }, 2000);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -45,34 +95,44 @@ const MainScreen = () => {
           <Die
             value={item}
             isHeld={heldDice[index]}
+            isCorrect={isCorrect(index)}
             onHold={() => holdDie(index)}
           />
         )}
         keyExtractor={(_, index) => index.toString()}
         numColumns={5}
-        columnWrapperStyle={styles.diceContainer}
+        contentContainerStyle={styles.diceContainer}
+        columnWrapperStyle={styles.columnWrapper}
+        style={styles.flatList}
       />
 
-      <TouchableOpacity style={styles.rollButton} onPress={rollDice}>
-        <Text style={styles.rollButtonText}>Roll</Text>
+      <TouchableOpacity
+        style={[styles.rollButton, !canRoll() && styles.disabledRollButton]}
+        onPress={rollDice}
+        disabled={!canRoll() || gameWon}
+      >
+        <Text style={styles.rollButtonText}>
+          {gameWon ? "You Won!" : "Roll"}
+        </Text>
       </TouchableOpacity>
     </View>
   );
 };
 
+export default MainScreen;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
-    alignItems: "center",
-    justifyContent: "center",
     padding: 20,
-    marginTop: 50,
+    justifyContent: "center",
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 10,
+    textAlign: "center",
   },
   instructions: {
     fontSize: 16,
@@ -83,16 +143,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     marginBottom: 20,
+    textAlign: "center",
+  },
+  flatList: {
+    flexGrow: 0,
+    marginBottom: 20,
   },
   diceContainer: {
+    alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10,
+  },
+  columnWrapper: {
+    justifyContent: "center",
   },
   rollButton: {
     backgroundColor: "#4b6aff",
     paddingVertical: 10,
     paddingHorizontal: 40,
     borderRadius: 8,
+    alignSelf: "center",
+  },
+  disabledRollButton: {
+    backgroundColor: "#aaa",
   },
   rollButtonText: {
     fontSize: 18,
@@ -100,5 +172,3 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
-
-export default MainScreen;

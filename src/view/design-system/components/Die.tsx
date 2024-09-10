@@ -1,18 +1,25 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
 import React from "react";
 
 interface DieProps {
   value: number;
   isHeld: boolean;
+  isCorrect?: boolean;
   onHold: () => void;
 }
 
-const Die = ({ value, isHeld, onHold }) => {
+const Die = ({ value, isHeld, onHold, isCorrect = false }: DieProps) => {
+  function determineBackgroundColor() {
+    if (!isHeld) return "#ffffff";
+    return isCorrect ? "#ff6666" : "#00cc99";
+  }
+
+  const isHeldStyle = {
+    backgroundColor: determineBackgroundColor(),
+  };
+
   return (
-    <TouchableOpacity
-      style={[styles.die, isHeld ? styles.heldDie : styles.defaultDie]}
-      onPress={onHold}
-    >
+    <TouchableOpacity style={[styles.die, isHeldStyle]} onPress={onHold}>
       <Text style={styles.dieText}>{value}</Text>
     </TouchableOpacity>
   );
@@ -28,15 +35,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 8,
-  },
-  defaultDie: {
-    backgroundColor: "#fff",
-    borderColor: "#ddd",
     borderWidth: 1,
-  },
-  heldDie: {
-    backgroundColor: "#ff6666",
-    borderColor: "#ff6666",
+    borderColor: "#ddd",
   },
   dieText: {
     fontSize: 20,
