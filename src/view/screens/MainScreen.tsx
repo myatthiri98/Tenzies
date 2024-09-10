@@ -1,19 +1,33 @@
 import React, { useCallback, useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  FlatList,
-} from "react-native";
-import Die from "../design-system/components/Die";
+import { StyleSheet, Text, View, FlatList } from "react-native";
+import Die from "../dice/Die";
+import Button from "../design-system/components/Button";
+import { T } from "../design-system/theme";
+import CustomModal from "../design-system/components/CustomModal";
+
+// Constants to avoid magic strings and numbers
+const DICE_COUNT = 10;
+const DIE_MAX_VALUE = 9;
+const ROLL_BUTTON_TEXT = "Roll";
+const WIN_TEXT = "You Won!";
+const TITLE_TEXT = "Tenzies";
+const INSTRUCTIONS_TEXT =
+  "Roll until all dice are the same. Click each die to freeze it at its current value between rolls.";
+const ATTEMPTS_TEXT = "Attempts: ";
+const WIN_TITLE_TEXT = "Congratulations!";
+const WIN_MESSAGE_TEXT = "You won the game! Do you want to play again?";
+const PLAY_AGAIN_BUTTON_TEXT = "Play Again";
 
 const generateDice = () =>
-  Array.from({ length: 10 }, () => Math.ceil(Math.random() * 9));
+  Array.from({ length: DICE_COUNT }, () =>
+    Math.ceil(Math.random() * DIE_MAX_VALUE)
+  );
 
 const MainScreen = () => {
   const [dice, setDice] = useState<number[]>(generateDice());
-  const [heldDice, setHeldDice] = useState<boolean[]>(Array(10).fill(false));
+  const [heldDice, setHeldDice] = useState<boolean[]>(
+    Array(DICE_COUNT).fill(false)
+  );
   const [attempts, setAttempts] = useState<number>(0);
   const [gameWon, setGameWon] = useState<boolean>(false);
   const [heldDiceValue, setHeldDiceValue] = useState<number | null>(null);
@@ -23,7 +37,7 @@ const MainScreen = () => {
       setAttempts((prev) => prev + 1);
       setDice((prevDice) =>
         prevDice.map((die, idx) =>
-          heldDice[idx] ? die : Math.ceil(Math.random() * 9)
+          heldDice[idx] ? die : Math.ceil(Math.random() * DIE_MAX_VALUE)
         )
       );
       checkForWin();
@@ -66,28 +80,29 @@ const MainScreen = () => {
 
     if (allHeld && allSameValue) {
       setGameWon(true);
-      resetGame();
     }
   }, [heldDice, dice]);
 
   const resetGame = useCallback(() => {
-    setTimeout(() => {
-      setAttempts(0);
-      setDice(generateDice());
-      setHeldDice(Array(10).fill(false));
-      setGameWon(false);
-      setHeldDiceValue(null);
-    }, 2000);
+    setAttempts(0);
+    setDice(generateDice());
+    setHeldDice(Array(DICE_COUNT).fill(false));
+    setGameWon(false);
+    setHeldDiceValue(null);
   }, []);
+
+  const handlePlayAgain = useCallback(() => {
+    resetGame();
+  }, [resetGame]);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tenzies</Text>
-      <Text style={styles.instructions}>
-        Roll until all dice are the same. Click each die to freeze it at its
-        current value between rolls.
+      <Text style={styles.title}>{TITLE_TEXT}</Text>
+      <Text style={styles.instructions}>{INSTRUCTIONS_TEXT}</Text>
+      <Text style={styles.attempts}>
+        {ATTEMPTS_TEXT}
+        {attempts}
       </Text>
-      <Text style={styles.attempts}>Attempts: {attempts}</Text>
 
       <FlatList
         data={dice}
@@ -106,15 +121,19 @@ const MainScreen = () => {
         style={styles.flatList}
       />
 
-      <TouchableOpacity
-        style={[styles.rollButton, !canRoll() && styles.disabledRollButton]}
+      <Button
+        title={gameWon ? WIN_TEXT : ROLL_BUTTON_TEXT}
         onPress={rollDice}
         disabled={!canRoll() || gameWon}
-      >
-        <Text style={styles.rollButtonText}>
-          {gameWon ? "You Won!" : "Roll"}
-        </Text>
-      </TouchableOpacity>
+      />
+
+      <CustomModal
+        visible={gameWon}
+        title={WIN_TITLE_TEXT}
+        message={WIN_MESSAGE_TEXT}
+        onClose={handlePlayAgain}
+        buttonText={PLAY_AGAIN_BUTTON_TEXT}
+      />
     </View>
   );
 };
@@ -124,30 +143,30 @@ export default MainScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
-    padding: 20,
     justifyContent: "center",
+    backgroundColor: T.colors.white,
+    padding: T.spacing.medium,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 10,
+    fontSize: T.font.size.large,
+    fontWeight: T.font.weight.bold,
+    marginBottom: T.spacing.small,
     textAlign: "center",
   },
   instructions: {
-    fontSize: 16,
+    fontSize: T.font.size.regular,
+    marginBottom: T.spacing.medium,
     textAlign: "center",
-    marginBottom: 20,
   },
   attempts: {
-    fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 20,
+    fontSize: T.font.size.regular,
+    fontWeight: T.font.weight.bold,
+    marginBottom: T.spacing.medium,
     textAlign: "center",
   },
   flatList: {
     flexGrow: 0,
-    marginBottom: 20,
+    marginBottom: T.spacing.medium,
   },
   diceContainer: {
     alignItems: "center",
@@ -155,20 +174,5 @@ const styles = StyleSheet.create({
   },
   columnWrapper: {
     justifyContent: "center",
-  },
-  rollButton: {
-    backgroundColor: "#4b6aff",
-    paddingVertical: 10,
-    paddingHorizontal: 40,
-    borderRadius: 8,
-    alignSelf: "center",
-  },
-  disabledRollButton: {
-    backgroundColor: "#aaa",
-  },
-  rollButtonText: {
-    fontSize: 18,
-    color: "#fff",
-    fontWeight: "bold",
   },
 });

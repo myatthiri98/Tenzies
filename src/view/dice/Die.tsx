@@ -1,5 +1,6 @@
 import { StyleSheet, Text, TouchableOpacity } from "react-native";
 import React from "react";
+import { T } from "../design-system/theme";
 
 interface DieProps {
   value: number;
@@ -9,10 +10,10 @@ interface DieProps {
 }
 
 const Die = ({ value, isHeld, onHold, isCorrect = false }: DieProps) => {
-  function determineBackgroundColor() {
-    if (!isHeld) return "#ffffff";
-    return isCorrect ? "#ff6666" : "#00cc99";
-  }
+  const determineBackgroundColor = () => {
+    if (!isHeld) return T.colors.white;
+    return isCorrect ? T.colors.correct : T.colors.held;
+  };
 
   const isHeldStyle = {
     backgroundColor: determineBackgroundColor(),
@@ -31,15 +32,15 @@ const styles = StyleSheet.create({
   die: {
     width: 50,
     height: 50,
-    margin: 5,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
+    margin: T.spacing.small,
+    borderRadius: T.border.radius.roundedSmall,
+    borderWidth: T.border.width.thin,
+    borderColor: T.colors.grey,
   },
   dieText: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: T.font.size.medium,
+    fontWeight: T.font.weight.bold,
   },
 });
