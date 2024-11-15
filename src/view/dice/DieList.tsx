@@ -7,15 +7,17 @@ type DieListProps = {
   dice: number[];
   heldDice: boolean[];
   onHoldDie: (index: number) => void;
+  selectedNumber: number | null
 };
 
-function DieList({ dice, heldDice, onHoldDie }: DieListProps) {
+function DieList({ dice, heldDice, onHoldDie,selectedNumber }: DieListProps) {
   return (
     <FlatList
       style={styles.dieList}
       data={dice}
       renderItem={({ item, index }) => (
-        <DieCard value={item} isHeld={heldDice[index]} onHold={() => onHoldDie(index)} />
+        <DieCard value={item} isHeld={heldDice[index]} onHold={() => onHoldDie(index)} 
+        selectedNumber={selectedNumber}/>
       )}
       keyExtractor={(_, index) => index.toString()}
       numColumns={T.size.xSmall}

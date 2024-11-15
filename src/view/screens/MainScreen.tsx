@@ -1,45 +1,39 @@
-import React, { useState, useCallback } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import React from "react";
+import { Alert, StyleSheet, Text, View } from "react-native";
+import { useSelector, useDispatch } from "react-redux";
 import CustomButton from "../design-system/components/CustomButton";
 import CustomModal from "../design-system/components/CustomModal";
 import DieList from "../dice/DieList";
-import { GameState, generateDice, Labels } from "../design-system/constants/constants";
 import { T } from "../design-system/theme";
+import { Labels } from "../design-system/constants/constants";
+import { rollDice, holdDie, checkForWin, resetGame } from '../../core/redux/slices/gameSlice';
+import { RootState } from "../../core/redux/store";
+
 
 function MainScreen() {
-  const [dice, setDice] = useState<number[]>(generateDice());
-  const [heldDice, setHeldDice] = useState<boolean[]>(Array(10).fill(false));
-  const [attempts, setAttempts] = useState<number>(0);
-  const [gameState, setGameState] = useState<GameState>(GameState.PLAYING);
+  const dice = useSelector((state: RootState) => state.game.dice);
+  const heldDice = useSelector((state: RootState) => state.game.heldDice);
+  const attempts = useSelector((state: RootState) => state.game.attempts);
+  const status = useSelector((state: RootState) => state.game.status);
+  const selectedNumber = useSelector((state: RootState) => state.game.selectedNumber); 
+  const dispatch = useDispatch();
 
-  const rollDice = useCallback(() => {
-    if (gameState === GameState.PLAYING) {
-      setDice((prevDice) =>
-        prevDice.map((die, idx) => (heldDice[idx] ? die : Math.ceil(Math.random() * 9)))
-      );
-      setAttempts((prev) => prev + 1);
-      checkForWin(dice, heldDice);
+  const rollDiceHandler = () => {
+    if (status === 'MISMATCH') {
+      Alert.alert("Mismatched Dice", "Please select dice with the same number before rolling.");
+      return;
     }
-  }, [gameState, heldDice, dice]);
+    dispatch(rollDice());
+    dispatch(checkForWin());
+  };
 
-  const holdDie = useCallback((index: number) => {
-    setHeldDice((prev) =>
-      prev.map((isHeld, idx) => (idx === index ? !isHeld : isHeld))
-    );
-  }, []);
+  const holdDieHandler = (index: number) => {
+    dispatch(holdDie(index));
+  };
 
-  const checkForWin = useCallback((currentDice: number[], currentHeldDice: boolean[]) => {
-    if (currentHeldDice.every((isHeld) => isHeld) && currentDice.every((value) => value === currentDice[0])) {
-      setGameState(GameState.WON);
-    }
-  }, []);
-
-  const resetGame = useCallback(() => {
-    setDice(generateDice());
-    setHeldDice(Array(10).fill(false));
-    setAttempts(0);
-    setGameState(GameState.PLAYING);
-  }, []);
+  const resetGameHandler = () => {
+    dispatch(resetGame());
+  };
 
   return (
     <View style={styles.container}>
@@ -48,18 +42,18 @@ function MainScreen() {
       <Text style={styles.attempts}>
         {Labels.ATTEMPTS} {attempts}
       </Text>
-      <DieList dice={dice} heldDice={heldDice} onHoldDie={holdDie} />
+      <DieList dice={dice} heldDice={heldDice} onHoldDie={holdDieHandler} selectedNumber={selectedNumber} />
       <View style={styles.buttonContainer}>
         <CustomButton
-          title={gameState === GameState.WON ? Labels.WIN : Labels.ROLL_BUTTON}
-          onPress={rollDice}
+          title={status === "WON" ? Labels.WIN : Labels.ROLL_BUTTON}
+          onPress={rollDiceHandler}
         />
       </View>
       <CustomModal
-        visible={gameState === GameState.WON}
+        visible={status === "WON"}
         title={Labels.WIN_TITLE}
         message={Labels.WIN_MESSAGE}
-        onClose={resetGame}
+        onClose={resetGameHandler}
         buttonText={Labels.PLAY_AGAIN}
       />
     </View>

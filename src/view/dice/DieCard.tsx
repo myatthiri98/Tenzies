@@ -6,19 +6,26 @@ type DieCardProps = {
   value: number;
   isHeld: boolean;
   onHold: () => void;
+  selectedNumber: number | null;
 };
 
-function DieCard({ value, isHeld, onHold }: DieCardProps) {
+function DieCard({ value, isHeld, onHold ,selectedNumber}: DieCardProps) {
+
+    const backgroundColor = isHeld
+    ? value === selectedNumber
+      ? T.colors.held// matched color
+      : T.colors.red   // mismatched color
+    : T.colors.white;
+    
   return (
-    <Pressable style={[styles.die, isHeld && styles.held]} onPress={onHold}>
-      <Text style={styles.dieText}>{value}</Text>
-    </Pressable>
+    <Pressable style={[styles.die, { backgroundColor }]} onPress={onHold}>
+    <Text style={styles.dieText}>{value}</Text>
+  </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   die: {
-    backgroundColor: T.colors.white,
     borderRadius: T.border.radius.extraRounded,
     padding: T.spacing.small,
     margin: T.spacing.extraSmall,

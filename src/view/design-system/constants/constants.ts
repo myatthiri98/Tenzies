@@ -10,6 +10,7 @@ export enum Labels {
   WIN_TITLE = "Congratulations!",
   WIN_MESSAGE = "You won the game! Play again?",
   PLAY_AGAIN = "Play Again",
+  DEFAULT_BUTTON_TEXT = "OK"
 }
 
 export enum GameState {
