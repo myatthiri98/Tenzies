@@ -1,11 +1,18 @@
 import MainScreen from "./src/view/screens/MainScreen";
 import React from "react";
-import { SafeAreaView } from "react-native";
+import { SafeAreaView, StatusBar,StyleSheet } from "react-native";
+import { T } from "./src/view/design-system/theme";
 
 export default function App() {
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor={T.colors.lightBlue} />
       <MainScreen />
     </SafeAreaView>
   );
 }
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: T.colors.lightBlue,
+  },})

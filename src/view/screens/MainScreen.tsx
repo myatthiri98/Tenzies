@@ -1,156 +1,82 @@
-import React, { useCallback, useState } from "react";
-import { StyleSheet, Text, View, FlatList } from "react-native";
-import Die from "../dice/Die";
-import Button from "../design-system/components/Button";
-import { T } from "../design-system/theme";
+import React, { useState, useCallback } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import CustomButton from "../design-system/components/CustomButton";
 import CustomModal from "../design-system/components/CustomModal";
+import DieList from "../dice/DieList";
+import { GameState, generateDice, Labels } from "../design-system/constants/constants";
+import { T } from "../design-system/theme";
 
-// Constants to avoid magic strings and numbers
-const DICE_COUNT = 10;
-const DIE_MAX_VALUE = 9;
-const ROLL_BUTTON_TEXT = "Roll";
-const WIN_TEXT = "You Won!";
-const TITLE_TEXT = "Tenzies";
-const INSTRUCTIONS_TEXT =
-  "Roll until all dice are the same. Click each die to freeze it at its current value between rolls.";
-const ATTEMPTS_TEXT = "Attempts: ";
-const WIN_TITLE_TEXT = "Congratulations!";
-const WIN_MESSAGE_TEXT = "You won the game! Do you want to play again?";
-const PLAY_AGAIN_BUTTON_TEXT = "Play Again";
-
-const generateDice = () =>
-  Array.from({ length: DICE_COUNT }, () =>
-    Math.ceil(Math.random() * DIE_MAX_VALUE)
-  );
-
-const MainScreen = () => {
+function MainScreen() {
   const [dice, setDice] = useState<number[]>(generateDice());
-  const [heldDice, setHeldDice] = useState<boolean[]>(
-    Array(DICE_COUNT).fill(false)
-  );
+  const [heldDice, setHeldDice] = useState<boolean[]>(Array(10).fill(false));
   const [attempts, setAttempts] = useState<number>(0);
-  const [gameWon, setGameWon] = useState<boolean>(false);
-  const [heldDiceValue, setHeldDiceValue] = useState<number | null>(null);
+  const [gameState, setGameState] = useState<GameState>(GameState.PLAYING);
 
   const rollDice = useCallback(() => {
-    if (!gameWon && canRoll()) {
-      setAttempts((prev) => prev + 1);
+    if (gameState === GameState.PLAYING) {
       setDice((prevDice) =>
-        prevDice.map((die, idx) =>
-          heldDice[idx] ? die : Math.ceil(Math.random() * DIE_MAX_VALUE)
-        )
+        prevDice.map((die, idx) => (heldDice[idx] ? die : Math.ceil(Math.random() * 9)))
       );
-      checkForWin();
+      setAttempts((prev) => prev + 1);
+      checkForWin(dice, heldDice);
     }
-  }, [gameWon, heldDice]);
+  }, [gameState, heldDice, dice]);
 
-  const holdDie = useCallback(
-    (index: number) => {
-      if (!gameWon) {
-        setHeldDice((prevHeldDice) => {
-          const newHeldDice = [...prevHeldDice];
-          newHeldDice[index] = !newHeldDice[index];
-
-          const newHeldValue = dice[index];
-          setHeldDiceValue(newHeldValue);
-
-          return newHeldDice;
-        });
-      }
-    },
-    [gameWon, dice]
-  );
-
-  const canRoll = useCallback(() => {
-    const heldDiceValues = dice.filter((_, idx) => heldDice[idx]);
-    return (
-      heldDiceValues.length === 0 ||
-      heldDiceValues.every((value) => value === heldDiceValues[0])
+  const holdDie = useCallback((index: number) => {
+    setHeldDice((prev) =>
+      prev.map((isHeld, idx) => (idx === index ? !isHeld : isHeld))
     );
-  }, [heldDice, dice]);
-
-  const isCorrect = useCallback(
-    (index: number) => heldDiceValue !== null && heldDiceValue === dice[index],
-    [heldDiceValue, dice]
-  );
-
-  const checkForWin = useCallback(() => {
-    const allHeld = heldDice.every((isHeld) => isHeld);
-    const allSameValue = dice.every((die) => die === dice[0]);
-
-    if (allHeld && allSameValue) {
-      setGameWon(true);
-    }
-  }, [heldDice, dice]);
-
-  const resetGame = useCallback(() => {
-    setAttempts(0);
-    setDice(generateDice());
-    setHeldDice(Array(DICE_COUNT).fill(false));
-    setGameWon(false);
-    setHeldDiceValue(null);
   }, []);
 
-  const handlePlayAgain = useCallback(() => {
-    resetGame();
-  }, [resetGame]);
+  const checkForWin = useCallback((currentDice: number[], currentHeldDice: boolean[]) => {
+    if (currentHeldDice.every((isHeld) => isHeld) && currentDice.every((value) => value === currentDice[0])) {
+      setGameState(GameState.WON);
+    }
+  }, []);
+
+  const resetGame = useCallback(() => {
+    setDice(generateDice());
+    setHeldDice(Array(10).fill(false));
+    setAttempts(0);
+    setGameState(GameState.PLAYING);
+  }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{TITLE_TEXT}</Text>
-      <Text style={styles.instructions}>{INSTRUCTIONS_TEXT}</Text>
+      <Text style={styles.title}>{Labels.TITLE}</Text>
+      <Text style={styles.instructions}>{Labels.INSTRUCTIONS}</Text>
       <Text style={styles.attempts}>
-        {ATTEMPTS_TEXT}
-        {attempts}
+        {Labels.ATTEMPTS} {attempts}
       </Text>
-
-      <FlatList
-        data={dice}
-        renderItem={({ item, index }) => (
-          <Die
-            value={item}
-            isHeld={heldDice[index]}
-            isCorrect={isCorrect(index)}
-            onHold={() => holdDie(index)}
-          />
-        )}
-        keyExtractor={(_, index) => index.toString()}
-        numColumns={5}
-        contentContainerStyle={styles.diceContainer}
-        columnWrapperStyle={styles.columnWrapper}
-        style={styles.flatList}
-      />
-
-      <Button
-        title={gameWon ? WIN_TEXT : ROLL_BUTTON_TEXT}
-        onPress={rollDice}
-        disabled={!canRoll() || gameWon}
-      />
-
+      <DieList dice={dice} heldDice={heldDice} onHoldDie={holdDie} />
+      <View style={styles.buttonContainer}>
+        <CustomButton
+          title={gameState === GameState.WON ? Labels.WIN : Labels.ROLL_BUTTON}
+          onPress={rollDice}
+        />
+      </View>
       <CustomModal
-        visible={gameWon}
-        title={WIN_TITLE_TEXT}
-        message={WIN_MESSAGE_TEXT}
-        onClose={handlePlayAgain}
-        buttonText={PLAY_AGAIN_BUTTON_TEXT}
+        visible={gameState === GameState.WON}
+        title={Labels.WIN_TITLE}
+        message={Labels.WIN_MESSAGE}
+        onClose={resetGame}
+        buttonText={Labels.PLAY_AGAIN}
       />
     </View>
   );
-};
-
-export default MainScreen;
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    backgroundColor: T.colors.white,
+    backgroundColor: T.colors.lightBlue,
     padding: T.spacing.medium,
   },
   title: {
-    fontSize: T.font.size.large,
+    fontSize: T.font.size.xLarge,
     fontWeight: T.font.weight.bold,
-    marginBottom: T.spacing.small,
+    marginBottom: T.spacing.medium,
     textAlign: "center",
   },
   instructions: {
@@ -164,15 +90,10 @@ const styles = StyleSheet.create({
     marginBottom: T.spacing.medium,
     textAlign: "center",
   },
-  flatList: {
-    flexGrow: 0,
-    marginBottom: T.spacing.medium,
-  },
-  diceContainer: {
+  buttonContainer: {
     alignItems: "center",
-    justifyContent: "center",
-  },
-  columnWrapper: {
-    justifyContent: "center",
+    marginVertical: T.spacing.xxLarge,
   },
 });
+
+export default MainScreen;

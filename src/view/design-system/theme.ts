@@ -6,7 +6,7 @@ export const T = {
     disabled: "#aaa",
     white: "#ffffff",
     correct: "#ff6666",
-    held: "#00cc99",
+    held: "#ff69b4",
     transparent: "transparent",
     text: "rgba(255, 255, 255, 1)",
     darkBlue: "rgba(12, 32, 122, 1)",
@@ -40,7 +40,7 @@ export const T = {
     },
   },
   size: {
-    xSmall: 11,
+    xSmall: 5,
     small: 14,
     medium: 20,
     large: 24,
@@ -53,7 +53,8 @@ export const T = {
     medium: 16,
     large: 20,
     xLarge: 25,
-    xxLarge: 32,
+    xxLarge: 100,
+
   },
   border: {
     width: {

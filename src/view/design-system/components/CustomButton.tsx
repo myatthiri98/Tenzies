@@ -1,8 +1,8 @@
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
 import React from "react";
 import { T } from "../theme";
 
-interface ButtonProps {
+type ButtonProps = {
   title: string;
   onPress: () => void;
   disabled?: boolean;
@@ -10,19 +10,19 @@ interface ButtonProps {
   testID?: string;
 }
 
-const Button = ({ title, onPress, disabled = false, style }: ButtonProps) => {
+function CustomButton ({ title, onPress, disabled = false, style }: ButtonProps) {
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
       disabled={disabled}
-      style={[styles.button, style, disabled && styles.disabledButton]} // Merge passed style with default button style
+      style={[styles.button, style, disabled && styles.disabledButton]} 
     >
       <Text style={styles.text}>{title}</Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 
-export default Button;
+export default CustomButton;
 
 const styles = StyleSheet.create({
   button: {

@@ -1,11 +1,11 @@
 import React from "react";
 import { Modal, StyleSheet, Text, View } from "react-native";
-import Button from "./Button";
+import CustomButton from "./CustomButton";
 import { T } from "../theme";
 
 const DEFAULT_BUTTON_TEXT = "OK";
 
-interface CustomModalProps {
+type CustomModalProps = {
   visible: boolean;
   title: string;
   message: string;
@@ -13,13 +13,13 @@ interface CustomModalProps {
   buttonText?: string;
 }
 
-const CustomModal = ({
+function CustomModal ({
   visible,
   title,
   message,
   onClose,
   buttonText = DEFAULT_BUTTON_TEXT,
-}: CustomModalProps) => {
+}: CustomModalProps) {
   return (
     <Modal
       transparent={true}
@@ -31,7 +31,7 @@ const CustomModal = ({
         <View style={styles.modalView}>
           <Text style={styles.modalTitle}>{title}</Text>
           <Text style={styles.modalText}>{message}</Text>
-          <Button title={buttonText} onPress={onClose} />
+          <CustomButton title={buttonText} onPress={onClose} />
         </View>
       </View>
     </Modal>
