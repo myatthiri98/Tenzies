@@ -1,25 +1,30 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { useSelector, useDispatch } from "react-redux";
-import { rollDice, holdDie, resetGame, checkForWin } from "../../core/redux/actions/gameActions";
 import CustomButton from "../design-system/components/CustomButton";
 import CustomModal from "../design-system/components/CustomModal";
 import DieList from "../dice/DieList";
 import { T } from "../design-system/theme";
 import { Labels } from "../design-system/constants/constants";
-import { GameActions, GameState } from "../../core/redux/types";
-import { Dispatch } from "redux";
+import { rollDice, holdDie, checkForWin, resetGame } from '../../core/redux/slices/gameSlice';
+import { RootState } from "../../core/redux/store";
+
 
 function MainScreen() {
-  const dice = useSelector((state: GameState) => state.dice);
-  const heldDice = useSelector((state: GameState) => state.heldDice);
-  const attempts = useSelector((state: GameState) => state.attempts);
-  const status = useSelector((state: GameState) => state.status);
-  const dispatch = useDispatch<Dispatch<GameActions>>();
+  const dice = useSelector((state: RootState) => state.game.dice);
+  const heldDice = useSelector((state: RootState) => state.game.heldDice);
+  const attempts = useSelector((state: RootState) => state.game.attempts);
+  const status = useSelector((state: RootState) => state.game.status);
+  const selectedNumber = useSelector((state: RootState) => state.game.selectedNumber); 
+  const dispatch = useDispatch();
 
   const rollDiceHandler = () => {
-    dispatch(rollDice() as GameActions);
-    dispatch(checkForWin() as GameActions);
+    if (status === 'MISMATCH') {
+      Alert.alert("Mismatched Dice", "Please select dice with the same number before rolling.");
+      return;
+    }
+    dispatch(rollDice());
+    dispatch(checkForWin());
   };
 
   const holdDieHandler = (index: number) => {
@@ -37,7 +42,7 @@ function MainScreen() {
       <Text style={styles.attempts}>
         {Labels.ATTEMPTS} {attempts}
       </Text>
-      <DieList dice={dice} heldDice={heldDice} onHoldDie={holdDieHandler} />
+      <DieList dice={dice} heldDice={heldDice} onHoldDie={holdDieHandler} selectedNumber={selectedNumber} />
       <View style={styles.buttonContainer}>
         <CustomButton
           title={status === "WON" ? Labels.WIN : Labels.ROLL_BUTTON}
