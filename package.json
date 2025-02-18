@@ -11,6 +11,8 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.3.0",
     "expo": "~51.0.28",
+    "expo-list-installed-apps": "file:../expo-list-installed-apps/expo-list-installed-apps-0.1.0.tgz",
+    "expo-modules-core": "~1.12.26",
     "expo-status-bar": "~1.12.1",
     "react": "18.2.0",
     "react-native": "0.74.5",
